@@ -62,17 +62,43 @@ tree n = [x - 1 | x <- [0..], null $ (s x n)] !! 0
 -- BIGGEST OF BOIS
 -- BuchHolz Hydra with only labels 1 and 0
 
-data H = L Int | B [H] deriving Show
+data H = L Int | B [H] deriving (Show, Eq)
 
-lvo = B [B [B [L 1, L 1], L 1], L 0]
+--lvo = B [B [B [L 1, L 1], L 1], L 0]
+
+smol = B [L 1, L 0]
+
+c :: H -> H -> H
+
+c (B x) (B z) = B (x ++ z)
+c (L x) (B z) = B (L x : z)
 
 sb :: H -> H
 
-sb (L 1) = L 0
-
+sb (L x) = L 0
 sb (B (x:xs)) = B (sb x : xs)
+sb (B x) = L 0
 
-someFunc = print $ sb lvo
+r :: H -> H -> Int -> H
+
+r t @ (B (u:v)) (b @ (B _)) n =
+          if (u == (L 1))
+            then (c (sb b) (B v))
+          else if (u /= (L 1) || u /= (L 0))
+            then B ((replicate n (rr u b n)) ++ v)
+            else B v
+
+rr (B t) b n = if (t !! 0) == (L 0)
+  then (r (B t) b n)
+  else (r (B t) b n)
+
+rr t b n = B []
+
+f t@(B x) n = if (length x == 1) then n else (f (rr t (B []) n) (n + 1))
+
+someFunc = print $ f smol   1
+
+--someFunc = print $ sb lvo
 
 {-
 def S(T):
@@ -96,7 +122,9 @@ A = [1, 0]
 
 print(RR(A, 1))
 -}
---r :: H -> H -> Int -> H
+
+
+
 
 --someFunc = print $ tree 2
 
