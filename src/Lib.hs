@@ -44,7 +44,7 @@ uparrow _ _ 0 = 1
 uparrow a n b = uparrow a (n - 1) (uparrow a n (b - 1))
 
 
-
+{--
 -- TREE() function modified from https://codegolf.stackexchange.com/a/146532/75773
 data T = T [T] Int
 l (T n _) = 1 + sum(l <$> n)
@@ -56,7 +56,7 @@ s 0 z = [[]]
 s n z= [t:p | p <- (s (n - 1) z), t <- (a n z), (l t <= n) > any(# t) p]
 -- TREE(1) = 1, TREE(2) = 3, TREE(3) = BIG
 tree n = [x - 1 | x <- [0..], null $ (s x n)] !! 0
-
+--}
 
 
 -- BIGGEST OF BOIS
@@ -68,61 +68,23 @@ data H = L Int | B [H] deriving (Show, Eq)
 
 smol = B [L 1, L 0]
 
-c :: H -> H -> H
-
-c (B x) (B z) = B (x ++ z)
-c (L x) (B z) = B (L x : z)
-
 sb :: H -> H
 
 sb (L x) = L 0
 sb (B (x:xs)) = B (sb x : xs)
-sb (B x) = L 0
+sb x = L 0  
 
-r :: H -> H -> Int -> H
+r ::
 
-r t @ (B (u:v)) (b @ (B _)) n =
-          if (u == (L 1))
-            then (c (sb b) (B v))
-          else if (u /= (L 1) || u /= (L 0))
-            then B ((replicate n (rr u b n)) ++ v)
-            else B v
 
-rr (B t) b n = if (t !! 0) == (L 0)
-  then (r (B t) b n)
-  else (r (B t) b n)
 
-rr t b n = B []
+--rr t b n = B []
 
-f t@(B x) n = if (length x == 1) then n else (f (rr t (B []) n) (n + 1))
+--f t@(B x) n = if (length x == 1) then n else (f (rr t (B []) n) (n + 1))
 
-someFunc = print $ f smol   1
+someFunc = print $ f smol 1
 
 --someFunc = print $ sb lvo
-
-{-
-def S(T):
-  return 0 if T == 1 else [S(T[0])] + T[1:]
-
-def R(T, c, B=None):
-  if not B:
-    B = []
-  U=T[0]
-  V=T[1:]
-  if T[-1]==0:
-    B=T
-  if U==1:
-      return [S(B)]+V
-  return [R(U, c, B)]*c+V if U else V
-
-def RR(T, c):
-  return c if len(T) == 0 else RR(R(T, c), c + c)
-
-A = [1, 0]
-
-print(RR(A, 1))
--}
-
 
 
 

@@ -44,7 +44,7 @@ uparrow _ _ 0 = 1
 uparrow a n b = uparrow a (n - 1) (uparrow a n (b - 1))
 
 
-
+{--
 -- TREE() function modified from https://codegolf.stackexchange.com/a/146532/75773
 data T = T [T] Int
 l (T n _) = 1 + sum(l <$> n)
@@ -56,7 +56,7 @@ s 0 z = [[]]
 s n z= [t:p | p <- (s (n - 1) z), t <- (a n z), (l t <= n) > any(# t) p]
 -- TREE(1) = 1, TREE(2) = 3, TREE(3) = BIG
 tree n = [x - 1 | x <- [0..], null $ (s x n)] !! 0
-
+--}
 
 
 -- BIGGEST OF BOIS
@@ -91,7 +91,7 @@ r t @ (B (u:v)) (b @ (B _)) n =
 rr (B t) b n = if (t !! 0) == (L 0)
   then (r (B t) b n)
   else (r (B t) b n)
-  
+
 rr t b n = B []
 
 f t@(B x) n = if (length x == 1) then n else (f (rr t (B []) n) (n + 1))
