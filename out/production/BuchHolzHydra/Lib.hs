@@ -68,66 +68,27 @@ data H = L Int | B [H] deriving (Show, Eq)
 
 smol = B [L 1, L 0]
 
-c :: H -> H -> H
-
-c (B x) (B z) = B (x ++ z)
-c (L x) (B z) = B (L x : z)
-
 sb :: H -> H
 
 sb (L x) = L 0
 sb (B (x:xs)) = B (sb x : xs)
-sb (B x) = L 0
+sb x = L 0  
 
-r :: H -> H -> Int -> H
 
-r t @ (B (u:v)) (b @ (B _)) n =
-          if (u == (L 1))
-            then (c (sb b) (B v))
-          else if (u /= (L 1) || u /= (L 0))
-            then B ((replicate n (rr u b n)) ++ v)
-            else B v
 
-rr (B t) b n = if (t !! 0) == (L 0)
-  then (r (B t) b n)
-  else (r (B t) b n)
 
-rr t b n = B []
+--rr t b n = B []
 
-f t@(B x) n = if (length x == 1) then n else (f (rr t (B []) n) (n + 1))
+--f t@(B x) n = if (length x == 1) then n else (f (rr t (B []) n) (n + 1))
 
-someFunc = print $ f smol 1
+--someFunc = print $ f smol 1
 
 --someFunc = print $ sb lvo
-
-{-
-def S(T):
-  return 0 if T == 1 else [S(T[0])] + T[1:]
-
-def R(T, c, B=None):
-  if not B:
-    B = []
-  U=T[0]
-  V=T[1:]
-  if T[-1]==0:
-    B=T
-  if U==1:
-      return [S(B)]+V
-  return [R(U, c, B)]*c+V if U else V
-
-def RR(T, c):
-  return c if len(T) == 0 else RR(R(T, c), c + c)
-
-A = [1, 0]
-
-print(RR(A, 1))
--}
-
 
 
 
 --someFunc = print $ tree 2
 
---someFunc = print (conway [3, 3, 2])
+someFunc = print (conway [3, 3, 2])
 
 --someFunc = print (uparrow 3 3 2)

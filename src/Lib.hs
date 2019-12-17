@@ -74,7 +74,6 @@ sb (L x) = L 0
 sb (B (x:xs)) = B (sb x : xs)
 sb x = L 0  
 
-r ::
 
 
 
@@ -82,7 +81,7 @@ r ::
 
 --f t@(B x) n = if (length x == 1) then n else (f (rr t (B []) n) (n + 1))
 
-someFunc = print $ f smol 1
+--someFunc = print $ f smol 1
 
 --someFunc = print $ sb lvo
 
@@ -90,6 +89,6 @@ someFunc = print $ f smol 1
 
 --someFunc = print $ tree 2
 
---someFunc = print (conway [3, 3, 2])
+someFunc = print (conway [3, 3, 2])
 
 --someFunc = print (uparrow 3 3 2)
