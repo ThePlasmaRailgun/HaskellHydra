@@ -4,6 +4,7 @@ module Lib
 
 -- import Data.Tree
 
+-- TREE() function modified from https://codegolf.stackexchange.com/a/146532/7577
 
 someFunc :: IO ()
 
@@ -44,8 +45,7 @@ uparrow _ _ 0 = 1
 uparrow a n b = uparrow a (n - 1) (uparrow a n (b - 1))
 
 
-{--
--- TREE() function modified from https://codegolf.stackexchange.com/a/146532/75773
+-- TREE(1) = 1, TREE(2) = 3, TREE(3) = BIG
 data T = T [T] Int
 l (T n _) = 1 + sum(l <$> n)
 a @ (T n c) # T m d = any(a #) m || c == d && n ! m
@@ -54,11 +54,11 @@ x ! _ = null x
 a n z = concat [ T <$> mapM(\_ -> (a (n - 1) z)) [2..x] <*> [1..z] | x <- [1..n]]
 s 0 z = [[]]
 s n z= [t:p | p <- (s (n - 1) z), t <- (a n z), (l t <= n) > any(# t) p]
--- TREE(1) = 1, TREE(2) = 3, TREE(3) = BIG
+
 tree n = [x - 1 | x <- [0..], null $ (s x n)] !! 0
---}
 
 
+{--
 -- BIGGEST OF BOIS
 -- BuchHolz Hydra with only labels 1 and 0
 
@@ -73,7 +73,7 @@ sb :: H -> H
 sb (L x) = L 0
 sb (B (x:xs)) = B (sb x : xs)
 sb x = L 0  
-
+--}
 
 
 
