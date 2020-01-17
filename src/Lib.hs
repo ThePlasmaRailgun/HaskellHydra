@@ -2,7 +2,7 @@ module Lib
     ( someFunc
     ) where
 
--- import Data.Tree
+import Data.List
 
 -- TREE() function modified from https://codegolf.stackexchange.com/a/146532/7577
 
@@ -53,7 +53,7 @@ TREE() function on k-labeled trees
 --}
 
 
-data Tree = Tree [Tree] Int deriving Show
+data Tree = Tree [Tree] Int deriving (Show, Eq)
 
 -- Number of nodes of a tree
 tlength :: Tree -> Int
@@ -69,22 +69,17 @@ a @ (Tree n c) # Tree m d = any(a #) m || c == d && n ! m
 l @ (x:t) ! (y:u) = l ! u || x # y && t ! u
 x ! _ = null x
 
-
-treehelp :: Int -> Int -> [Tree]
-
-treehelp nodes labels = (getTrees (nodes - 1) labels)
-
-
-treeNodes nodes labels x = ((mapM ((\_ -> treehelp nodes labels)) [2..x]))
-
-thing x = Tree <$> x
-
 getTrees :: Int -> Int -> [Tree]
+getTrees' :: Int -> Int -> [Tree]
 
-getTrees nodes labels = concat [ (
-    (fmap Tree (treeNodes nodes labels x)
-    ) <*> [1..labels]) 
-                                 | x <- [1..nodes]]
+getTrees nodes labels = concat [ Tree <$> mapM(\_ -> (getTrees (nodes - 1) labels)) [2..x] <*> [1..labels] | x <- [1..nodes]]
+
+
+getTrees' 1 labels = [Tree [] x | x <- [1..labels]]
+
+getTrees' nodes labels = (getTrees' (nodes - 1) labels) ++ 
+                         ([Tree [t] x | x <- [1..labels], 
+                                        t <- getTrees' (nodes - 1) labels])
 
 
 {-- Lists all valid sequences of labeled trees
@@ -129,6 +124,13 @@ strrepl :: String -> String
 strrepl [] = [];
 strrepl (x:xs) = (if x == ',' then ",\n" else [x]) ++ (strrepl xs)
 
+showrepl :: Show a => a -> IO ()
+
+showrepl = putStrLn . strrepl . show
+
+showlen :: [Tree] -> [Int]
+
+showlen = map tlength
 
 {--
 t1 = Tree [ Tree [Tree [] 1, Tree [] 3 ] 2 ] 1
@@ -137,8 +139,17 @@ t2 = Tree [Tree [] 1, Tree [] 3 ] 2
 --}
 
 someFunc = do {
-    print $ (map . map) tlength treeseq;
-    putStrLn $ strrepl (show treeseq);    
+    --print $ (map . map) tlength treeseq;
+    --putStrLn $ strrepl (show treeseq);  
+    showrepl trees1;
+    putStrLn $ "\n\n";
+    showrepl trees2;
+    putStrLn $ "\n\n";
+    showrepl trees3;
+
+    print $ showlen trees1;
+    print $ showlen trees2;
+    print $ showlen trees3;
     
     {--
     print $ map (map tlength) (treeseq2);
@@ -151,7 +162,14 @@ someFunc = do {
     print $ t2 # t1; -- True
     print $ t1 # t2; -- False
     --}
-} where treeseq = (treeSeqs 3 2); 
+} where treeseq = (treeSeqs masterlen 2); 
+trees1 = (nub (getTrees masterlen 2)); 
+trees2 = (nub (getTrees' masterlen 2)); 
+trees3 = filter (\x -> (tlength x) <= masterlen) trees1;
+
+masterlen = 3;
+
+
 
 -- There are no valid 4 length sequences with only two colors
 -- treeseq2 = (treeSeqs 4 2); 
