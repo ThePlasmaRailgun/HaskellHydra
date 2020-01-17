@@ -45,50 +45,118 @@ uparrow _ _ 0 = 1
 uparrow a n b = uparrow a (n - 1) (uparrow a n (b - 1))
 
 
--- TREE(1) = 1, TREE(2) = 3, TREE(3) = BIG
-data T = T [T] Int
-l (T n _) = 1 + sum(l <$> n)
-a @ (T n c) # T m d = any(a #) m || c == d && n ! m
-l @ (x:t) ! (y:u) = l ! u || x # y && t ! u
-x ! _ = null x
-a n z = concat [ T <$> mapM(\_ -> (a (n - 1) z)) [2..x] <*> [1..z] | x <- [1..n]]
-s 0 z = [[]]
-s n z= [t:p | p <- (s (n - 1) z), t <- (a n z), (l t <= n) > any(# t) p]
-
-tree n = [x - 1 | x <- [0..], null $ (s x n)] !! 0
-
-
 {--
--- BIGGEST OF BOIS
--- BuchHolz Hydra with only labels 1 and 0
 
-data H = L Int | B [H] deriving (Show, Eq)
+Kruskal's tree theorem 
+TREE() function on k-labeled trees
 
---lvo = B [B [B [L 1, L 1], L 1], L 0]
-
-smol = B [L 1, L 0]
-
-sb :: H -> H
-
-sb (L x) = L 0
-sb (B (x:xs)) = B (sb x : xs)
-sb x = L 0  
 --}
 
 
+data Tree = Tree [Tree] Int deriving Show
 
---rr t b n = B []
+-- Number of nodes of a tree
+tlength :: Tree -> Int
+tlength (Tree n _) = 1 + sum(tlength <$> n)
 
---f t@(B x) n = if (length x == 1) then n else (f (rr t (B []) n) (n + 1))
+-- Homeomorphic embeddability
+-- x # y means that x is embeddable into y
+(#) :: Tree -> Tree -> Bool
+a @ (Tree n c) # Tree m d = any(a #) m || c == d && n ! m
 
---someFunc = print $ f smol 1
+-- Helper for embedding, don't use directly
+(!) :: [Tree] -> [Tree] -> Bool
+l @ (x:t) ! (y:u) = l ! u || x # y && t ! u
+x ! _ = null x
 
---someFunc = print $ sb lvo
+
+treehelp :: Int -> Int -> [Tree]
+
+treehelp nodes labels = (getTrees (nodes - 1) labels)
 
 
+treeNodes nodes labels x = ((mapM ((\_ -> treehelp nodes labels)) [2..x]))
 
---someFunc = print $ tree 2
+thing x = Tree <$> x
 
-someFunc = print (conway [3, 3, 2])
+getTrees :: Int -> Int -> [Tree]
+
+getTrees nodes labels = concat [ (
+    (fmap Tree (treeNodes nodes labels x)
+    ) <*> [1..labels]) 
+                                 | x <- [1..nodes]]
+
+
+{-- Lists all valid sequences of labeled trees
+
+NOTE: This list is reversed, largest trees are at head of list!
+
+From mathematical definition:
+
+We have a sequence of k-labeled trees T_1, T_2, T_3... (T_1 will be at last index on Haskell list because sequence is reversed)
+
+Such that:
+
+* Each tree T_i has at most i vertices
+* No tree is homeomorphically embeddable into any tree later in the sequence 
+(in this case that means embeddable into any tree with a smaller index, see note)
+
+`treeSeqs seqlen labels` returns all valid sequences of length `seqlen` with `labels` coloring, ie. T_1, T_2... T_seqlen.
+--}
+
+treeSeqs :: Int -> Int -> [[Tree]]
+
+
+treeSeqs 0 _ = [[]]
+treeSeqs seqlen labels = [tree:priors | priors <- (treeSeqs (seqlen - 1) labels), -- Recursively get the values for T_i-1, T_i-2...
+                                tree <- (getTrees seqlen labels), -- The current tree with up to`seqlen` vertices
+                                (tlength tree <= seqlen) -- T_i has at most i vertices
+                                && not (any(# tree) priors)] -- None of the trees in `p` embed into t
+
+-- Actual tree function
+-- TREE(1) = 1, TREE(2) = 3, TREE(3) = BIG
+-- the function parameter is actually the number of tree colors allowed
+
+tree :: Int -> Int
+tree n = [x - 1 | x <- [0..], -- For all possible sequence lengths, find the longest for which a valid sequence still exists
+                  null $ (treeSeqs x n)] !! 0 
+            
+
+
+-- Replace commas with comma then newline
+strrepl :: String -> String
+
+strrepl [] = [];
+strrepl (x:xs) = (if x == ',' then ",\n" else [x]) ++ (strrepl xs)
+
+
+{--
+t1 = Tree [ Tree [Tree [] 1, Tree [] 3 ] 2 ] 1
+t2 = Tree [Tree [] 1, Tree [] 3 ] 2
+-- t2 embeds into t1
+--}
+
+someFunc = do {
+    print $ (map . map) tlength treeseq;
+    putStrLn $ strrepl (show treeseq);    
+    
+    {--
+    print $ map (map tlength) (treeseq2);
+    putStrLn $ (strrepl (show treeseq2));
+    --}
+
+    {--  
+    print $ t1;
+    print $ t2;
+    print $ t2 # t1; -- True
+    print $ t1 # t2; -- False
+    --}
+} where treeseq = (treeSeqs 3 2); 
+
+-- There are no valid 4 length sequences with only two colors
+-- treeseq2 = (treeSeqs 4 2); 
+
+
+--someFunc = print (conway [3, 3, 2])
 
 --someFunc = print (uparrow 3 3 2)

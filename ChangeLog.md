@@ -1,3 +1,3 @@
-# Changelog for BuchHolzHydra
+# Changelog for HydraHaskell
 
 ## Unreleased changes
