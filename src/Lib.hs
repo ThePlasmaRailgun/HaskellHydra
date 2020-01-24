@@ -3,6 +3,16 @@ module Lib
     ) where
 
 import Data.List
+import qualified Data.Set as Set
+import Control.Applicative
+
+-- Inverse map 
+-- Applies list of functions to single arg
+pam :: [a -> b] -> a -> [b]
+
+pam fl x = map ($ x) fl
+-- Also an option, though less clear
+--pam fl x = fl <*> (return x)
 
 -- TREE() function modified from https://codegolf.stackexchange.com/a/146532/7577
 
@@ -46,40 +56,41 @@ uparrow a n b = uparrow a (n - 1) (uparrow a n (b - 1))
 
 
 {--
-
 Kruskal's tree theorem 
 TREE() function on k-labeled trees
-
 --}
 
 
-data Tree = Tree [Tree] Int deriving (Show, Eq)
+data Tree = Tree [Tree] Int deriving (Show, Eq, Ord)
 
 -- Number of nodes of a tree
 tlength :: Tree -> Int
-tlength (Tree n _) = 1 + sum(tlength <$> n)
+tlength (Tree nodes _) = 1 + sum(tlength <$> nodes)
 
 -- Homeomorphic embeddability
 -- x # y means that x is embeddable into y
 (#) :: Tree -> Tree -> Bool
-a @ (Tree n c) # Tree m d = any(a #) m || c == d && n ! m
+left @ (Tree n c) # right @ (Tree m d) = any(left #) m || c == d && n ! m
 
 -- Helper for embedding, don't use directly
 (!) :: [Tree] -> [Tree] -> Bool
 l @ (x:t) ! (y:u) = l ! u || x # y && t ! u
 x ! _ = null x
 
-getTrees :: Int -> Int -> [Tree]
-getTrees' :: Int -> Int -> [Tree]
+genTrees :: Int -> Int -> [Tree]
 
-getTrees nodes labels = concat [ Tree <$> mapM(\_ -> (getTrees (nodes - 1) labels)) [2..x] <*> [1..labels] | x <- [1..nodes]]
+-- Generate a list of lists of Tree
+-- map Tree [[Tree]] to create partials of each tree without labels
+
+genTreeList_ :: Int -> Int -> [[Tree]] 
 
 
-getTrees' 1 labels = [Tree [] x | x <- [1..labels]]
-
-getTrees' nodes labels = (getTrees' (nodes - 1) labels) ++ 
-                         ([Tree [t] x | x <- [1..labels], 
-                                        t <- getTrees' (nodes - 1) labels])
+genTreeList_ nodes labels = concat [ 
+    (mapM (\_ -> (genTrees (nodes - 1) labels)) [2..x]) | 
+                                                        x <- [1..nodes]]
+genTrees nodes labels = concat [ 
+    pam (map Tree (genTreeList_ nodes labels)) label | 
+                                                    label <- [1..labels]]
 
 
 {-- Lists all valid sequences of labeled trees
@@ -104,77 +115,26 @@ treeSeqs :: Int -> Int -> [[Tree]]
 
 treeSeqs 0 _ = [[]]
 treeSeqs seqlen labels = [tree:priors | priors <- (treeSeqs (seqlen - 1) labels), -- Recursively get the values for T_i-1, T_i-2...
-                                tree <- (getTrees seqlen labels), -- The current tree with up to`seqlen` vertices
+                                tree <- (genTrees seqlen labels), -- The current tree with up to`seqlen` vertices
                                 (tlength tree <= seqlen) -- T_i has at most i vertices
                                 && not (any(# tree) priors)] -- None of the trees in `p` embed into t
 
--- Actual tree function
--- TREE(1) = 1, TREE(2) = 3, TREE(3) = BIG
--- the function parameter is actually the number of tree colors allowed
+-- Actual tree function, TREE(1) = 1, TREE(2) = 3, TREE(3) = BIG
 
 tree :: Int -> Int
-tree n = [x - 1 | x <- [0..], -- For all possible sequence lengths, find the longest for which a valid sequence still exists
-                  null $ (treeSeqs x n)] !! 0 
-            
+-- For all possible sequence lengths, find the longest for which a valid sequence still exists
+tree n = head [x - 1 | x <- [0..], null (treeSeqs x n)]
 
 
--- Replace commas with comma then newline
-strrepl :: String -> String
-
-strrepl [] = [];
-strrepl (x:xs) = (if x == ',' then ",\n" else [x]) ++ (strrepl xs)
-
-showrepl :: Show a => a -> IO ()
-
-showrepl = putStrLn . strrepl . show
-
-showlen :: [Tree] -> [Int]
-
-showlen = map tlength
-
-{--
-t1 = Tree [ Tree [Tree [] 1, Tree [] 3 ] 2 ] 1
-t2 = Tree [Tree [] 1, Tree [] 3 ] 2
--- t2 embeds into t1
---}
+printTree :: Int -> IO ()
+printTree n = do {
+    putStr "TREE(";
+    putStr $ show n; 
+    putStr ") = ";
+    putStrLn $ show $ tree n;
+}
 
 someFunc = do {
-    --print $ (map . map) tlength treeseq;
-    --putStrLn $ strrepl (show treeseq);  
-    showrepl trees1;
-    putStrLn $ "\n\n";
-    showrepl trees2;
-    putStrLn $ "\n\n";
-    showrepl trees3;
-
-    print $ showlen trees1;
-    print $ showlen trees2;
-    print $ showlen trees3;
-    
-    {--
-    print $ map (map tlength) (treeseq2);
-    putStrLn $ (strrepl (show treeseq2));
-    --}
-
-    {--  
-    print $ t1;
-    print $ t2;
-    print $ t2 # t1; -- True
-    print $ t1 # t2; -- False
-    --}
-} where treeseq = (treeSeqs masterlen 2); 
-trees1 = (nub (getTrees masterlen 2)); 
-trees2 = (nub (getTrees' masterlen 2)); 
-trees3 = filter (\x -> (tlength x) <= masterlen) trees1;
-
-masterlen = 3;
-
-
-
--- There are no valid 4 length sequences with only two colors
--- treeseq2 = (treeSeqs 4 2); 
-
-
---someFunc = print (conway [3, 3, 2])
-
---someFunc = print (uparrow 3 3 2)
+    printTree 1;
+    printTree 2;
+}
